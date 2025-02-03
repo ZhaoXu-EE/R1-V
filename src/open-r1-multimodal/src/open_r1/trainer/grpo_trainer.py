@@ -168,7 +168,11 @@ class Qwen2VLGRPOTrainer(Trainer):
         # Models
         # Trained model
         model_init_kwargs = args.model_init_kwargs or {}
-        model_init_kwargs["attn_implementation"] = attn_implementation
+
+        # 暂时关闭 Flash Attention
+        temp_attn_implementation = "eager"  # 先使用普通的注意力机制
+        model_init_kwargs["attn_implementation"] = temp_attn_implementation
+
         if isinstance(model, str):
             model_id = model
             torch_dtype = model_init_kwargs.get("torch_dtype")
@@ -187,7 +191,16 @@ class Qwen2VLGRPOTrainer(Trainer):
                 False if args.gradient_checkpointing else model_init_kwargs.get("use_cache")
             )
             if "Qwen2-VL" in model_id:
-                model = Qwen2VLForConditionalGeneration.from_pretrained(model, **model_init_kwargs)
+                # 1. 先加载到CPU
+                model = Qwen2VLForConditionalGeneration.from_pretrained(
+                    model, 
+                    torch_dtype=torch.bfloat16, 
+                    **model_init_kwargs
+                )
+                # 2. 移到GPU
+                model = model.to("cuda")
+                # 3. 重新配置为使用 Flash Attention
+                model.config.attn_implementation = attn_implementation
             elif "Aria" in model_id:
                 model_init_kwargs.pop("use_cache")
                 model = AriaForConditionalGeneration.from_pretrained(model, **model_init_kwargs)
