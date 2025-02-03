@@ -11,8 +11,8 @@ torchrun --nproc_per_node="1" \
     --master_addr="127.0.0.1" \
     --master_port="12345" \
     src/open_r1/grpo.py \
-    --output_dir "/home/xu/workspace/R1-V/output" \
-    --model_name_or_path "/home/xu/workspace/R1-V/src/open-r1-multimodal/Qwen2-VL-2B-Instruct" \
+    --output_dir "output" \
+    --model_name_or_path "Qwen/Qwen2-VL-2B-Instruct" \
     --dataset_name "leonardPKU/clevr_cogen_a_train" \
     --max_prompt_length 1024 \
     --per_device_train_batch_size 1 \
